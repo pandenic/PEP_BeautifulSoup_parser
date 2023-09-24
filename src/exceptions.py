@@ -1,5 +1,4 @@
 """Contain constants for bs4 parser app."""
-# exceptions.py
 
 
 class ParserFindTagException(Exception):

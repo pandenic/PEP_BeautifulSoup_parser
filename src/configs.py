@@ -1,12 +1,14 @@
 """Contains configs for logging and commannd line parsing."""
 import argparse
 import logging
+from enum import Enum
 from logging.handlers import RotatingFileHandler
+from typing import Any
 
-from constants import BASE_DIR, LOG_DT_FORMAT, LOG_FORMAT
+from constants import BASE_DIR, LOG_DT_FORMAT, LOG_FORMAT, OutputMode
 
 
-def configure_argument_parser(available_modes):
+def configure_argument_parser(available_modes: Any) -> Any:
     """Describe configure for argument parser."""
     parser = argparse.ArgumentParser(description='Парсер документации Python')
     parser.add_argument(
@@ -23,13 +25,13 @@ def configure_argument_parser(available_modes):
     parser.add_argument(
         '-o',
         '--output',
-        choices=('pretty', 'file'),
+        choices=tuple(OutputMode),
         help='Дополнительные способы вывода данных',
     )
     return parser
 
 
-def configure_logging():
+def configure_logging() -> None:
     """Describe configure for argument parser."""
     log_dir = BASE_DIR / 'logs'
     log_dir.mkdir(exist_ok=True)

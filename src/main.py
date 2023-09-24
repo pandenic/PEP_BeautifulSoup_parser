@@ -1,7 +1,7 @@
 """Describe main functions of bs4 app."""
-# main.py
 import logging
 import re
+from typing import List, Tuple, Any, Union
 from urllib.parse import urljoin
 
 import requests_cache
@@ -10,12 +10,13 @@ from tqdm import tqdm
 
 from configs import configure_argument_parser, configure_logging
 from constants import (BASE_DIR, DOCS_DOWNLOAD_URL, EXPECTED_STATUS,
-                       MAIN_DOC_URL, PEP_URL, WHATS_NEW_URL)
+                       MAIN_DOC_URL, PEP_URL, WHATS_NEW_URL, PARSING_MODULE, HTMLTags, DOWNLOAD_FILE_NAME_PATTERN,
+                       VERSION_STATUS_PATTERN)
 from outputs import control_output
 from utils import find_tag, get_response
 
 
-def whats_new(session):
+def whats_new(session: Any) -> Union[List[Tuple], None]:
     """
     Collect info for different versions of python.
 
@@ -25,26 +26,26 @@ def whats_new(session):
     if response is None:
         return
 
-    soup = BeautifulSoup(response.text, features='lxml')
+    soup = BeautifulSoup(response.text, features=PARSING_MODULE)
 
-    main_div = find_tag(soup, 'section', attrs={'id': 'what-s-new-in-python'})
-    div_with_ul = find_tag(main_div, 'div', attrs={'class': 'toctree-wrapper'})
+    main_div = find_tag(soup, HTMLTags.SECTION, attrs={'id': 'what-s-new-in-python'})
+    div_with_ul = find_tag(main_div, HTMLTags.DIV, attrs={'class': 'toctree-wrapper'})
     sections_by_python = tqdm(
-        div_with_ul.find_all('li', attrs={'class': 'toctree-l1'}),
+        div_with_ul.find_all(HTMLTags.LI, attrs={'class': 'toctree-l1'}),
     )
 
     results = [('Ссылка на статью', 'Заголовок', 'Редактор, Автор')]
     for section in tqdm(sections_by_python):
-        version_a_tag = find_tag(section, 'a')
+        version_a_tag = find_tag(section, HTMLTags.A)
         version_link = urljoin(WHATS_NEW_URL, version_a_tag['href'])
 
         response = get_response(session, version_link)
         if response is None:
             continue
 
-        soup = BeautifulSoup(response.text, 'lxml')
-        h1 = find_tag(soup, 'h1')
-        dl = find_tag(soup, 'dl')
+        soup = BeautifulSoup(response.text, PARSING_MODULE)
+        h1 = find_tag(soup, HTMLTags.H1)
+        dl = find_tag(soup, HTMLTags.DL)
         dl_text = dl.text.replace('\n', ' ')
 
         results.append((version_link, h1.text, dl_text))
@@ -52,29 +53,28 @@ def whats_new(session):
     return results
 
 
-def latest_versions(session):
+def latest_versions(session: Any) -> Union[List[Tuple], None]:
     """Collect links on docs for different versions of python."""
     response = get_response(session, MAIN_DOC_URL)
     if response is None:
         return
 
-    soup = BeautifulSoup(response.text, features='lxml')
-    sidebar = find_tag(soup, 'div', attrs={'class': 'sphinxsidebarwrapper'})
-    ul_tags = sidebar.find_all('ul')
+    soup = BeautifulSoup(response.text, features=PARSING_MODULE)
+    sidebar = find_tag(soup, HTMLTags.DIV, attrs={'class': 'sphinxsidebarwrapper'})
+    ul_tags = sidebar.find_all(HTMLTags.UL)
 
     for ul in ul_tags:
         if 'All versions' in ul.text:
-            a_tags = ul.find_all('a')
+            a_tags = ul.find_all(HTMLTags.A)
             break
     else:
         raise Exception('Nothing has been found')
 
     results = [('Ссылка на документацию', 'Версия', 'Статус')]
-    pattern = r'Python (?P<version>\d\.\d+) \((?P<status>.*)\)'
 
     for a_tag in a_tags:
         link = a_tag['href']
-        re_search = re.search(pattern, a_tag.text)
+        re_search = re.search(VERSION_STATUS_PATTERN, a_tag.text)
         if not re_search:
             version, status = a_tag.text, ''
         else:
@@ -84,16 +84,16 @@ def latest_versions(session):
     return results
 
 
-def download(session):
+def download(session: Any) -> None:
     """Download docs for the latest version of python."""
     response = get_response(session, DOCS_DOWNLOAD_URL)
     if response is None:
         return
 
-    soup = BeautifulSoup(response.text, features='lxml')
-    table = find_tag(soup, 'table', attrs={'class': 'docutils'})
+    soup = BeautifulSoup(response.text, features=PARSING_MODULE)
+    table = find_tag(soup, HTMLTags.TABLE, attrs={'class': 'docutils'})
     pdf_a4_tag = find_tag(
-        table, 'a', attrs={'href': re.compile(r'.+pdf-a4\.zip$')},
+        table, HTMLTags.A, attrs={'href': re.compile(DOWNLOAD_FILE_NAME_PATTERN)},
     )
     file_url = urljoin(DOCS_DOWNLOAD_URL, pdf_a4_tag['href'])
 
@@ -108,7 +108,7 @@ def download(session):
     logging.info(f'Архив был загружен и сохранён: {filepath}')
 
 
-def pep(session):
+def pep(session: Any) -> Union[List[Tuple], None]:
     """
     Count quantity of PEPs divided by status.
 
@@ -118,11 +118,11 @@ def pep(session):
     if response is None:
         return
 
-    soup = BeautifulSoup(response.text, features='lxml')
+    soup = BeautifulSoup(response.text, features=PARSING_MODULE)
 
-    main_div = find_tag(soup, 'section', attrs={'id': 'numerical-index'})
-    tbody = find_tag(main_div, 'tbody')
-    pep_list = tqdm(tbody.find_all('tr'))
+    main_div = find_tag(soup, HTMLTags.SECTION, attrs={'id': 'numerical-index'})
+    tbody = find_tag(main_div, HTMLTags.TBODY)
+    pep_list = tqdm(tbody.find_all(HTMLTags.TR))
 
     pep_quantity = dict.fromkeys(EXPECTED_STATUS.values(), 0)
     result = [('Статус', 'Количество')]
@@ -134,16 +134,16 @@ def pep(session):
         if response is None:
             continue
 
-        soup = BeautifulSoup(response.text, 'lxml')
+        soup = BeautifulSoup(response.text, PARSING_MODULE)
         dl_tag = find_tag(
-            soup, 'dl', attrs={'class': 'rfc2822 field-list simple'},
+            soup, HTMLTags.DL, attrs={'class': 'rfc2822 field-list simple'},
         )
         status_tag = find_tag(
             dl_tag,
-            'abbr',
+            HTMLTags.ABBR,
         )
         status = status_tag.text
-        table_status_letter = find_tag(pep_entity, 'abbr').text[1:]
+        table_status_letter = find_tag(pep_entity, HTMLTags.ABBR).text[1:]
 
         if status in EXPECTED_STATUS[table_status_letter]:
             pep_quantity[EXPECTED_STATUS[table_status_letter]] += 1
@@ -168,7 +168,7 @@ MODE_TO_FUNCTION = {
 }
 
 
-def main():
+def main() -> None:
     """Start the parser depending on the mode. Maintain logging."""
     configure_logging()
     logging.info('Парсер запущен!')

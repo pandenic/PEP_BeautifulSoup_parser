@@ -2,30 +2,31 @@
 import csv
 import datetime as dt
 import logging
+from typing import List, Tuple, Any, Union
 
 from prettytable import PrettyTable
 
-from constants import BASE_DIR, DATETIME_FORMAT
+from constants import BASE_DIR, DATETIME_FORMAT, OutputMode
 
 
-def control_output(results, cli_args):
+def control_output(results: Union[List[Tuple], None], cli_args: Any) -> None:
     """Change output depeends on chosen method."""
     output = cli_args.output
-    if output == 'pretty':
+    if output == OutputMode.PRETTY:
         pretty_output(results)
-    elif output == 'file':
+    elif output == OutputMode.FILE:
         file_output(results, cli_args)
     else:
         default_output(results)
 
 
-def default_output(results):
+def default_output(results: Union[List[Tuple], None]) -> None:
     """Describe default output."""
     for row in results:
         print(*row)
 
 
-def pretty_output(results):
+def pretty_output(results: Union[List[Tuple], None]) -> None:
     """Describe output using pretty table."""
     table = PrettyTable()
     table.field_names = results[0]
@@ -34,7 +35,7 @@ def pretty_output(results):
     print(table)
 
 
-def file_output(results, cli_args):
+def file_output(results: Union[List[Tuple]], cli_args: Any) -> None:
     """Describe ouutput in file."""
     results_dir = BASE_DIR / 'results'
     results_dir.mkdir(exist_ok=True)
