@@ -15,7 +15,9 @@ LOG_DT_FORMAT = '%d.%m.%Y %H:%M:%S'
 
 PARSING_MODULE = 'lxml'
 DOWNLOAD_FILE_NAME_PATTERN = r'.+pdf-a4\.zip$'
-VERSION_STATUS_PATTERN = r'Python (?P<version>\d\.\d+) \((?P<status>.*)\)'  # version and status pattern for latest version mode
+VERSION_STATUS_PATTERN = (
+    r'Python (?P<version>\d\.\d+) \((?P<status>.*)\)'
+)  # version and status pattern for latest version mode
 
 EXPECTED_STATUS = {
     'A': ('Active', 'Accepted'),
@@ -30,6 +32,8 @@ EXPECTED_STATUS = {
 
 
 class HTMLTags(str, Enum):
+    """Contains HTML tags for persing."""
+
     SECTION = 'section'
     TABLE = 'table'
     TBODY = 'tbody'
@@ -44,5 +48,7 @@ class HTMLTags(str, Enum):
 
 
 class OutputMode(str, Enum):
+    """Contains modes for output settings."""
+
     PRETTY = 'pretty'
     FILE = 'file'

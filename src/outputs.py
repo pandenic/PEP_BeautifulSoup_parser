@@ -2,7 +2,7 @@
 import csv
 import datetime as dt
 import logging
-from typing import List, Tuple, Any, Union
+from typing import Any, List, Tuple, Union
 
 from prettytable import PrettyTable
 

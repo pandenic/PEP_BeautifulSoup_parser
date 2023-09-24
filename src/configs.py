@@ -1,7 +1,6 @@
 """Contains configs for logging and commannd line parsing."""
 import argparse
 import logging
-from enum import Enum
 from logging.handlers import RotatingFileHandler
 from typing import Any
 

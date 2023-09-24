@@ -1,7 +1,7 @@
 """Describe main functions of bs4 app."""
 import logging
 import re
-from typing import List, Tuple, Any, Union
+from typing import Any, List, Tuple, Union
 from urllib.parse import urljoin
 
 import requests_cache
@@ -9,9 +9,9 @@ from bs4 import BeautifulSoup
 from tqdm import tqdm
 
 from configs import configure_argument_parser, configure_logging
-from constants import (BASE_DIR, DOCS_DOWNLOAD_URL, EXPECTED_STATUS,
-                       MAIN_DOC_URL, PEP_URL, WHATS_NEW_URL, PARSING_MODULE, HTMLTags, DOWNLOAD_FILE_NAME_PATTERN,
-                       VERSION_STATUS_PATTERN)
+from constants import (BASE_DIR, DOCS_DOWNLOAD_URL, DOWNLOAD_FILE_NAME_PATTERN,
+                       EXPECTED_STATUS, MAIN_DOC_URL, PARSING_MODULE, PEP_URL,
+                       VERSION_STATUS_PATTERN, WHATS_NEW_URL, HTMLTags)
 from outputs import control_output
 from utils import find_tag, get_response
 
@@ -28,8 +28,12 @@ def whats_new(session: Any) -> Union[List[Tuple], None]:
 
     soup = BeautifulSoup(response.text, features=PARSING_MODULE)
 
-    main_div = find_tag(soup, HTMLTags.SECTION, attrs={'id': 'what-s-new-in-python'})
-    div_with_ul = find_tag(main_div, HTMLTags.DIV, attrs={'class': 'toctree-wrapper'})
+    main_div = find_tag(
+        soup, HTMLTags.SECTION, attrs={'id': 'what-s-new-in-python'},
+    )
+    div_with_ul = find_tag(
+        main_div, HTMLTags.DIV, attrs={'class': 'toctree-wrapper'},
+    )
     sections_by_python = tqdm(
         div_with_ul.find_all(HTMLTags.LI, attrs={'class': 'toctree-l1'}),
     )
@@ -60,7 +64,9 @@ def latest_versions(session: Any) -> Union[List[Tuple], None]:
         return
 
     soup = BeautifulSoup(response.text, features=PARSING_MODULE)
-    sidebar = find_tag(soup, HTMLTags.DIV, attrs={'class': 'sphinxsidebarwrapper'})
+    sidebar = find_tag(
+        soup, HTMLTags.DIV, attrs={'class': 'sphinxsidebarwrapper'},
+    )
     ul_tags = sidebar.find_all(HTMLTags.UL)
 
     for ul in ul_tags:
@@ -93,7 +99,9 @@ def download(session: Any) -> None:
     soup = BeautifulSoup(response.text, features=PARSING_MODULE)
     table = find_tag(soup, HTMLTags.TABLE, attrs={'class': 'docutils'})
     pdf_a4_tag = find_tag(
-        table, HTMLTags.A, attrs={'href': re.compile(DOWNLOAD_FILE_NAME_PATTERN)},
+        table,
+        HTMLTags.A,
+        attrs={'href': re.compile(DOWNLOAD_FILE_NAME_PATTERN)},
     )
     file_url = urljoin(DOCS_DOWNLOAD_URL, pdf_a4_tag['href'])
 
@@ -120,7 +128,9 @@ def pep(session: Any) -> Union[List[Tuple], None]:
 
     soup = BeautifulSoup(response.text, features=PARSING_MODULE)
 
-    main_div = find_tag(soup, HTMLTags.SECTION, attrs={'id': 'numerical-index'})
+    main_div = find_tag(
+        soup, HTMLTags.SECTION, attrs={'id': 'numerical-index'},
+    )
     tbody = find_tag(main_div, HTMLTags.TBODY)
     pep_list = tqdm(tbody.find_all(HTMLTags.TR))
 
@@ -136,7 +146,9 @@ def pep(session: Any) -> Union[List[Tuple], None]:
 
         soup = BeautifulSoup(response.text, PARSING_MODULE)
         dl_tag = find_tag(
-            soup, HTMLTags.DL, attrs={'class': 'rfc2822 field-list simple'},
+            soup,
+            HTMLTags.DL,
+            attrs={'class': 'rfc2822 field-list simple'},
         )
         status_tag = find_tag(
             dl_tag,
