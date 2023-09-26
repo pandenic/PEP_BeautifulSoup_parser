@@ -1,11 +1,12 @@
 """Describe main functions of bs4 app."""
 import logging
 import re
-from typing import Any, List, Tuple, Union
+from typing import List, Optional, Sequence, Tuple, Union
 from urllib.parse import urljoin
 
 import requests_cache
 from bs4 import BeautifulSoup
+from requests_cache import CachedSession
 from tqdm import tqdm
 
 from configs import configure_argument_parser, configure_logging
@@ -16,7 +17,11 @@ from outputs import control_output
 from utils import find_tag, get_response
 
 
-def whats_new(session: Any) -> Union[List[Tuple], None]:
+def whats_new(
+    session: CachedSession,
+) -> Optional[
+    List[Union[Tuple[str, str, str], Tuple[Sequence[str], str, str]]]
+]:
     """
     Collect info for different versions of python.
 
@@ -29,16 +34,22 @@ def whats_new(session: Any) -> Union[List[Tuple], None]:
     soup = BeautifulSoup(response.text, features=PARSING_MODULE)
 
     main_div = find_tag(
-        soup, HTMLTags.SECTION, attrs={'id': 'what-s-new-in-python'},
+        soup,
+        HTMLTags.SECTION,
+        attrs={'id': 'what-s-new-in-python'},
     )
     div_with_ul = find_tag(
-        main_div, HTMLTags.DIV, attrs={'class': 'toctree-wrapper'},
+        main_div,
+        HTMLTags.DIV,
+        attrs={'class': 'toctree-wrapper'},
     )
     sections_by_python = tqdm(
         div_with_ul.find_all(HTMLTags.LI, attrs={'class': 'toctree-l1'}),
     )
 
-    results = [('Ссылка на статью', 'Заголовок', 'Редактор, Автор')]
+    results: List[
+        Union[Tuple[str, str, str], Tuple[Sequence[str], str, str]]
+    ] = [('Ссылка на статью', 'Заголовок', 'Редактор, Автор')]
     for section in tqdm(sections_by_python):
         version_a_tag = find_tag(section, HTMLTags.A)
         version_link = urljoin(WHATS_NEW_URL, version_a_tag['href'])
@@ -57,7 +68,9 @@ def whats_new(session: Any) -> Union[List[Tuple], None]:
     return results
 
 
-def latest_versions(session: Any) -> Union[List[Tuple], None]:
+def latest_versions(
+    session: CachedSession,
+) -> Optional[List[Tuple[str, str, str]]]:
     """Collect links on docs for different versions of python."""
     response = get_response(session, MAIN_DOC_URL)
     if response is None:
@@ -65,7 +78,9 @@ def latest_versions(session: Any) -> Union[List[Tuple], None]:
 
     soup = BeautifulSoup(response.text, features=PARSING_MODULE)
     sidebar = find_tag(
-        soup, HTMLTags.DIV, attrs={'class': 'sphinxsidebarwrapper'},
+        soup,
+        HTMLTags.DIV,
+        attrs={'class': 'sphinxsidebarwrapper'},
     )
     ul_tags = sidebar.find_all(HTMLTags.UL)
 
@@ -90,7 +105,7 @@ def latest_versions(session: Any) -> Union[List[Tuple], None]:
     return results
 
 
-def download(session: Any) -> None:
+def download(session: CachedSession) -> None:
     """Download docs for the latest version of python."""
     response = get_response(session, DOCS_DOWNLOAD_URL)
     if response is None:
@@ -116,7 +131,16 @@ def download(session: Any) -> None:
     logging.info(f'Архив был загружен и сохранён: {filepath}')
 
 
-def pep(session: Any) -> Union[List[Tuple], None]:
+def pep(
+    session: CachedSession,
+) -> List[
+    Union[
+        Tuple[str],
+        Tuple[str, str],
+        Tuple[Tuple[str, ...], str],
+        Tuple[str, Tuple[str, ...]],
+    ]
+]:
     """
     Count quantity of PEPs divided by status.
 
@@ -129,14 +153,25 @@ def pep(session: Any) -> Union[List[Tuple], None]:
     soup = BeautifulSoup(response.text, features=PARSING_MODULE)
 
     main_div = find_tag(
-        soup, HTMLTags.SECTION, attrs={'id': 'numerical-index'},
+        soup,
+        HTMLTags.SECTION,
+        attrs={'id': 'numerical-index'},
     )
     tbody = find_tag(main_div, HTMLTags.TBODY)
     pep_list = tqdm(tbody.find_all(HTMLTags.TR))
 
     pep_quantity = dict.fromkeys(EXPECTED_STATUS.values(), 0)
-    result = [('Статус', 'Количество')]
-    mismatched_statuses = [('Несовпадающие статусы:',)]
+    result: List[
+        Union[
+            Tuple[str],
+            Tuple[str, str],
+            Tuple[Tuple[str, ...], str],
+            Tuple[str, Tuple[str, ...]],
+        ]
+    ] = [('Статус', 'Количество')]
+    mismatched_statuses: List[
+        Union[Tuple[str], Tuple[str, str], Tuple[str, Tuple[str, ...]]]
+    ] = [('Несовпадающие статусы:',)]
 
     for pep_entity in pep_list:
         pep_link = urljoin(PEP_URL, pep_entity.a['href'])
@@ -166,8 +201,10 @@ def pep(session: Any) -> Union[List[Tuple], None]:
             ('Ожидаемые статусы:', EXPECTED_STATUS[table_status_letter]),
         )
 
-    result += [(status, quantity) for status, quantity in pep_quantity.items()]
-    result += [('Total', sum(pep_quantity.values()))]
+    result += [
+        (status, str(quantity)) for status, quantity in pep_quantity.items()
+    ]
+    result += [('Total', str(sum(pep_quantity.values())))]
     result += mismatched_statuses
     return result
 

@@ -7,7 +7,7 @@ from typing import Any
 from constants import BASE_DIR, LOG_DT_FORMAT, LOG_FORMAT, OutputMode
 
 
-def configure_argument_parser(available_modes: Any) -> Any:
+def configure_argument_parser(available_modes: Any) -> argparse.ArgumentParser:
     """Describe configure for argument parser."""
     parser = argparse.ArgumentParser(description='Парсер документации Python')
     parser.add_argument(

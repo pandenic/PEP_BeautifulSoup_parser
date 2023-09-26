@@ -3,18 +3,23 @@
 Logging and exception catching are added to fiunctions.
 """
 import logging
-from typing import Any, Dict, Pattern, Union
+from typing import Dict, Pattern, Sequence, Union
 
+from bs4 import NavigableString, Tag
 from requests import RequestException
+from requests_cache import CachedResponse, CachedSession, OriginalResponse
 
+from constants import RESPONSES_ENCODING
 from exceptions import ParserFindTagException
 
 
-def get_response(session: Any, url: str) -> Any:
+def get_response(
+    session: CachedSession, url: Sequence[str],
+) -> Union[OriginalResponse, CachedResponse]:
     """Add check if page loading error is catched and logging."""
     try:
-        response = session.get(url)
-        response.encoding = 'utf-8'
+        response = session.get(str(url))
+        response.encoding = RESPONSES_ENCODING
         return response
     except RequestException:
         logging.exception(
@@ -24,10 +29,10 @@ def get_response(session: Any, url: str) -> Any:
 
 
 def find_tag(
-    soup: Any,
+    soup: Union[Tag, NavigableString, int],
     tag: str,
     attrs: Union[Dict[str, str], Dict[str, Pattern[str]], None] = None,
-) -> Any:
+) -> Union[Tag, NavigableString, int]:
     """Add check if tag hasn't been found and logging."""
     searched_tag = soup.find(tag, attrs=(attrs or {}))
     if searched_tag is None:

@@ -18,6 +18,7 @@ DOWNLOAD_FILE_NAME_PATTERN = r'.+pdf-a4\.zip$'
 VERSION_STATUS_PATTERN = (
     r'Python (?P<version>\d\.\d+) \((?P<status>.*)\)'
 )  # version and status pattern for latest version mode
+RESPONSES_ENCODING = 'utf-8'
 
 EXPECTED_STATUS = {
     'A': ('Active', 'Accepted'),
