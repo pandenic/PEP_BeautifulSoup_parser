@@ -1,7 +1,7 @@
 # PEP parser app
 
 ## Description
-This application implements parsing of the pep site. It has 3 modes:
+This application parses the PEP site. It has 3 modes:
 1) ```python main.py whats-new``` - collects article info for different versions of Python (topics, links, and authors).
 2) ```python main.py latest-versions``` - collects links on docs, version numbers, and statuses for different Python versions.
 3) ```python main.py download``` - download docs for the latest version of python.
