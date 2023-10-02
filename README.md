@@ -11,7 +11,6 @@ The application has several optional parameters:
 1) ```-c --clear-cache``` - clear the cache
 2) ```-o --output``` - set the mode of output: ```pretty``` - draw a table in command line for output; ```file``` - create a file with output data.
 
-# Libs
 | Technologies | Link |
 | ---- | ---- |
 | ![git_BeautifulSoup](https://github.com/pandenic/PEP_BeautifulSoup_parser/assets/114985447/22f818bc-d8df-4085-bfa6-26b6fd092f1b) | [Beautiful Soup](https://www.crummy.com/software/BeautifulSoup/) |
